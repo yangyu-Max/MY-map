@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>G4223沿江高速重庆巫山-万州段标段分布图</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f0f2f5; }
+    
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      transition: opacity 0.5s;
+    }
+    
+    #loading h1 {
+      color: #1890ff;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    
+    #loading p {
+      color: #666;
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    
+    #loading .error {
+      color: #ff4d4f;
+      font-weight: bold;
+      margin-top: 20px;
+      display: none;
+    }
+    
+    #container { width: 100%; height: 100vh; display: flex; }
+    #map { flex: 1; height: 100%; }
+    #sidebar { width: 380px; height: 100%; background: #f5f5f5; overflow-y: auto; padding: 15px; border-left: 1px solid #ddd; }
+    
+    h1 { font-size: 18px; margin-bottom: 15px; color: #333; border-bottom: 2px solid #1890ff; padding-bottom: 10px; }
+    
+    .project-info { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .project-info h3 { font-size: 14px; color: #666; margin-bottom: 10px; }
+    .project-info .item { display: flex; justify-content: space-between; margin: 8px 0; font-size: 13px; }
+    .project-info .item .label { color: #666; }
+    .project-info .item .value { color: #333; font-weight: bold; }
+    
+    .stats { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .stats h3 { font-size: 14px; color: #666; margin-bottom: 10px; }
+    .stats .number { font-size: 24px; font-weight: bold; color: #1890ff; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .stats-grid .stat-item { text-align: center; padding: 10px; background: #f8f9fa; border-radius: 6px; }
+    .stats-grid .stat-item .num { font-size: 20px; font-weight: bold; color: #1890ff; }
+    .stats-grid .stat-item .label { font-size: 12px; color: #999; margin-top: 4px; }
+    
+    .location-list { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .location-item { padding: 12px 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.3s; }
+    .location-item:hover { background: #e6f7ff; }
+    .location-item:last-child { border-bottom: none; }
+    .location-item .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .location-item .name { font-weight: bold; color: #333; font-size: 14px; }
+    .location-item .area-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; color: white; }
+    .location-item .address { color: #666; font-size: 12px; margin: 4px 0; }
+    .location-item .materials { display: flex; gap: 10px; margin-top: 6px; }
+    .location-item .material-item { font-size: 11px; padding: 3px 8px; background: #e6f7ff; border-radius: 4px; color: #1890ff; }
+    .location-item .total { font-size: 12px; color: #ff4d4f; font-weight: bold; margin-top: 5px; }
+    
+    .legend { position: absolute; bottom: 20px; left: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; }
+    .legend h4 { font-size: 14px; margin-bottom: 10px; }
+    .legend-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 12px; }
+    .legend-color { width: 20px; height: 20px; border-radius: 50%; margin-right: 8px; }
+  </style>
+  <script src="https://webapi.amap.com/maps?v=2.0&key=2674f2c328906db199e4debb3cd57abe&plugin=AMap.Scale,AMap.ToolBar&callback=initMap"></script>
+</head>
+<body>
+  <div id="loading">
+    <h1>📍 G4223沿江高速重庆巫山-万州段标段分布图</h1>
+    <p>正在加载地图...</p>
+    <p id="loading-status">初始化中...</p>
+  </div>
+
+  <div id="container">
+    <div id="map"></div>
+    <div id="sidebar">
+      <h1>G4223沿江高速重庆巫山-万州段标段分布</h1>
+      
+      <div class="project-info">
+        <h3>📋 项目信息</h3>
+        <div class="item">
+          <span class="label">项目名称</span>
+          <span class="value">G4223沿江高速项目</span>
+        </div>
+        <div class="item">
+          <span class="label">建设区间</span>
+          <span class="value">重庆巫山-万州段</span>
+        </div>
+      </div>
+      
+      <div class="stats">
+        <h3>📊 物资统计</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="num">12</div>
+            <div class="label">标段数量</div>
+          </div>
+          <div class="stat-item">
+            <div class="num">166</div>
+            <div class="label">总需求(万吨)</div>
+          </div>
+          <div class="stat-item">
+            <div class="num">77.8</div>
+            <div class="label">机制砂(万吨)</div>
+          </div>
+          <div class="stat-item">
+            <div class="num">88.2</div>
+            <div class="label">碎石(万吨)</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="location-list">
+        <div class="location-item" data-index="0">
+          <div class="header">
+            <span class="name">1标</span>
+            <span class="area-tag" style="background:#ff4d4f;">巫山县</span>
+          </div>
+          <div class="address">📍 巫山县官渡镇大坪西北203米</div>
+          <div class="materials">
+            <span class="material-item">机制砂 6.4万吨</span>
+            <span class="material-item">碎石 7.3万吨</span>
+          </div>
+          <div class="total">合计：13.7万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="1">
+          <div class="header">
+            <span class="name">2标-1#拌合站</span>
+            <span class="area-tag" style="background:#ff4d4f;">巫山县</span>
+          </div>
+          <div class="address">📍 巫山县铜鼓镇镇李萌咀</div>
+          <div class="materials">
+            <span class="material-item">机制砂 3.85万吨</span>
+            <span class="material-item">碎石 4.4万吨</span>
+          </div>
+          <div class="total">合计：8.25万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="2">
+          <div class="header">
+            <span class="name">2标-2#拌合站</span>
+            <span class="area-tag" style="background:#ff4d4f;">巫山县</span>
+          </div>
+          <div class="address">📍 巫山县铜鼓镇镇金湾村祠堂洼西151米</div>
+          <div class="materials">
+            <span class="material-item">机制砂 3.85万吨</span>
+            <span class="material-item">碎石 4.4万吨</span>
+          </div>
+          <div class="total">合计：8.25万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="3">
+          <div class="header">
+            <span class="name">3标-1#拌合站</span>
+            <span class="area-tag" style="background:#ff4d4f;">巫山县</span>
+          </div>
+          <div class="address">📍 重庆市巫山县庙宇镇永胜村</div>
+          <div class="materials">
+            <span class="material-item">机制砂 2.55万吨</span>
+            <span class="material-item">碎石 3万吨</span>
+          </div>
+          <div class="total">合计：5.55万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="4">
+          <div class="header">
+            <span class="name">3标-2#拌合站</span>
+            <span class="area-tag" style="background:#ff4d4f;">巫山县</span>
+          </div>
+          <div class="address">📍 重庆市巫山县庙宇镇九台村双河口西北104米</div>
+          <div class="materials">
+            <span class="material-item">机制砂 2.55万吨</span>
+            <span class="material-item">碎石 3万吨</span>
+          </div>
+          <div class="total">合计：5.55万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="5">
+          <div class="header">
+            <span class="name">4标-1#拌合站</span>
+            <span class="area-tag" style="background:#1890ff;">奉节县</span>
+          </div>
+          <div class="address">📍 奉节县长安土家族乡张家槽</div>
+          <div class="materials">
+            <span class="material-item">机制砂 2.35万吨</span>
+            <span class="material-item">碎石 2.75万吨</span>
+          </div>
+          <div class="total">合计：5.1万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="6">
+          <div class="header">
+            <span class="name">4标-2#拌合站</span>
+            <span class="area-tag" style="background:#1890ff;">奉节县</span>
+          </div>
+          <div class="address">📍 奉节县冯坪乡新屋场</div>
+          <div class="materials">
+            <span class="material-item">机制砂 2.35万吨</span>
+            <span class="material-item">碎石 2.75万吨</span>
+          </div>
+          <div class="total">合计：5.1万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="7">
+          <div class="header">
+            <span class="name">5标-1#拌合站</span>
+            <span class="area-tag" style="background:#1890ff;">奉节县</span>
+          </div>
+          <div class="address">📍 奉节县冯坪乡新屋场</div>
+          <div class="materials">
+            <span class="material-item">机制砂 5万吨</span>
+            <span class="material-item">碎石 5万吨</span>
+          </div>
+          <div class="total">合计：10万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="8">
+          <div class="header">
+            <span class="name">5标-2#拌合站</span>
+            <span class="area-tag" style="background:#1890ff;">奉节县</span>
+          </div>
+          <div class="address">📍 新民镇汪家湾</div>
+          <div class="materials">
+            <span class="material-item">机制砂 5万吨</span>
+            <span class="material-item">碎石 5万吨</span>
+          </div>
+          <div class="total">合计：10万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="9">
+          <div class="header">
+            <span class="name">6标</span>
+            <span class="area-tag" style="background:#1890ff;">奉节县</span>
+          </div>
+          <div class="address">📍 奉节县新民镇凉水坪</div>
+          <div class="materials">
+            <span class="material-item">机制砂 7.7万吨</span>
+            <span class="material-item">碎石 8.9万吨</span>
+          </div>
+          <div class="total">合计：16.6万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="10">
+          <div class="header">
+            <span class="name">7标</span>
+            <span class="area-tag" style="background:#1890ff;">奉节县</span>
+          </div>
+          <div class="address">📍 奉节县安坪镇新安路魏家老屋</div>
+          <div class="materials">
+            <span class="material-item">机制砂 7.7万吨</span>
+            <span class="material-item">碎石 8.9万吨</span>
+          </div>
+          <div class="total">合计：16.6万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="11">
+          <div class="header">
+            <span class="name">8标-1#拌合站</span>
+            <span class="area-tag" style="background:#1890ff;">奉节县</span>
+          </div>
+          <div class="address">📍 奉节县安坪镇新安路魏家老屋（7标合建）</div>
+          <div class="materials">
+            <span class="material-item">机制砂 3.4万吨</span>
+            <span class="material-item">碎石 3.85万吨</span>
+          </div>
+          <div class="total">合计：7.25万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="12">
+          <div class="header">
+            <span class="name">8标-2#拌合站</span>
+            <span class="area-tag" style="background:#1890ff;">奉节县</span>
+          </div>
+          <div class="address">📍 奉节县甲高镇龙社区一组</div>
+          <div class="materials">
+            <span class="material-item">机制砂 3.4万吨</span>
+            <span class="material-item">碎石 3.85万吨</span>
+          </div>
+          <div class="total">合计：7.25万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="13">
+          <div class="header">
+            <span class="name">9标</span>
+            <span class="area-tag" style="background:#1890ff;">奉节县</span>
+          </div>
+          <div class="address">📍 奉节县甲高镇大塘村</div>
+          <div class="materials">
+            <span class="material-item">机制砂 4.3万吨</span>
+            <span class="material-item">碎石 5万吨</span>
+          </div>
+          <div class="total">合计：9.3万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="14">
+          <div class="header">
+            <span class="name">10标</span>
+            <span class="area-tag" style="background:#52c41a;">云阳县</span>
+          </div>
+          <div class="address">📍 云阳县故陵镇钟王村</div>
+          <div class="materials">
+            <span class="material-item">机制砂 5.1万吨</span>
+            <span class="material-item">碎石 6万吨</span>
+          </div>
+          <div class="total">合计：11.1万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="15">
+          <div class="header">
+            <span class="name">11标-1#拌合站</span>
+            <span class="area-tag" style="background:#52c41a;">云阳县</span>
+          </div>
+          <div class="address">📍 云阳县中前石油故陵加油站</div>
+          <div class="materials">
+            <span class="material-item">机制砂 3.15万吨</span>
+            <span class="material-item">碎石 3.6万吨</span>
+          </div>
+          <div class="total">合计：6.75万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="16">
+          <div class="header">
+            <span class="name">11标-2#拌合站</span>
+            <span class="area-tag" style="background:#52c41a;">云阳县</span>
+          </div>
+          <div class="address">📍 云阳县新津乡和平社区北</div>
+          <div class="materials">
+            <span class="material-item">机制砂 3.15万吨</span>
+            <span class="material-item">碎石 3.6万吨</span>
+          </div>
+          <div class="total">合计：6.75万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="17">
+          <div class="header">
+            <span class="name">12标-1#拌合站</span>
+            <span class="area-tag" style="background:#52c41a;">云阳县</span>
+          </div>
+          <div class="address">📍 云阳县宝坪镇枣树村谭家院子</div>
+          <div class="materials">
+            <span class="material-item">机制砂 4万吨</span>
+            <span class="material-item">碎石 4.6万吨</span>
+          </div>
+          <div class="total">合计：8.6万吨</div>
+        </div>
+        
+        <div class="location-item" data-index="18">
+          <div class="header">
+            <span class="name">12标-2#拌合站</span>
+            <span class="area-tag" style="background:#52c41a;">云阳县</span>
+          </div>
+          <div class="address">📍 云阳县故陵镇桥亭村倒开门</div>
+          <div class="materials">
+            <span class="material-item">机制砂 2万吨</span>
+            <span class="material-item">碎石 2.3万吨</span>
+          </div>
+          <div class="total">合计：4.3万吨</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="legend">
+    <h4>📍 区域分布</h4>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #ff4d4f;"></div>
+      <span>巫山县 (1-3标)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #1890ff;"></div>
+      <span>奉节县 (4-9标)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #52c41a;"></div>
+      <span>云阳县 (10-12标)</span>
+    </div>
+  </div>
+
+  <script>
+    // 全局变量
+    let map = null;
+    let markers = [];
+    let infoWindows = [];
+    
+    function updateLoadingStatus(text) {
+      const el = document.getElementById('loading-status');
+      if (el) el.textContent = text;
+    }
+    
+    function hideLoading() {
+      const el = document.getElementById('loading');
+      if (el) {
+        el.style.opacity = '0';
+        setTimeout(() => { el.style.display = 'none'; }, 500);
+      }
+    }
+    
+    // 地图初始化回调
+    function initMap() {
+      updateLoadingStatus('API已加载，正在初始化地图...');
+      
+      try {
+        map = new AMap.Map('map', {
+          zoom: 9,
+          center: [109.5, 31.0],
+          viewMode: '2D'
+        });
+        
+        updateLoadingStatus('地图已初始化，正在添加标记...');
+        
+        map.addControl(new AMap.Scale());
+        map.addControl(new AMap.ToolBar());
+        
+        const areaColors = {
+          '巫山县': '#ff4d4f',
+          '奉节县': '#1890ff',
+          '云阳县': '#52c41a'
+        };
+        
+        // 基于图片的完整数据
+        const locations = [
+          { 标段: '1标', 地址: '巫山县官渡镇大坪西北203米', 机制砂: '6.4万吨', 碎石: '7.3万吨', 合计: '13.7万吨', lng: 109.8, lat: 31.2, area: '巫山县' },
+          { 标段: '2标-1#拌合站', 地址: '巫山县铜鼓镇镇李萌咀', 机制砂: '3.85万吨', 碎石: '4.4万吨', 合计: '8.25万吨', lng: 109.75, lat: 31.15, area: '巫山县' },
+          { 标段: '2标-2#拌合站', 地址: '巫山县铜鼓镇镇金湾村祠堂洼西151米', 机制砂: '3.85万吨', 碎石: '4.4万吨', 合计: '8.25万吨', lng: 109.76, lat: 31.14, area: '巫山县' },
+          { 标段: '3标-1#拌合站', 地址: '重庆市巫山县庙宇镇永胜村', 机制砂: '2.55万吨', 碎石: '3万吨', 合计: '5.55万吨', lng: 109.7, lat: 31.05, area: '巫山县' },
+          { 标段: '3标-2#拌合站', 地址: '重庆市巫山县庙宇镇九台村双河口西北104米', 机制砂: '2.55万吨', 碎石: '3万吨', 合计: '5.55万吨', lng: 109.71, lat: 31.04, area: '巫山县' },
+          { 标段: '4标-1#拌合站', 地址: '奉节县长安土家族乡张家槽', 机制砂: '2.35万吨', 碎石: '2.75万吨', 合计: '5.1万吨', lng: 109.6, lat: 31.1, area: '奉节县' },
+          { 标段: '4标-2#拌合站', 地址: '奉节县冯坪乡新屋场', 机制砂: '2.35万吨', 碎石: '2.75万吨', 合计: '5.1万吨', lng: 109.55, lat: 31.08, area: '奉节县' },
+          { 标段: '5标-1#拌合站', 地址: '奉节县冯坪乡新屋场', 机制砂: '5万吨', 碎石: '5万吨', 合计: '10万吨', lng: 109.55, lat: 31.08, area: '奉节县' },
+          { 标段: '5标-2#拌合站', 地址: '新民镇汪家湾', 机制砂: '5万吨', 碎石: '5万吨', 合计: '10万吨', lng: 109.5, lat: 31.05, area: '奉节县' },
+          { 标段: '6标', 地址: '奉节县新民镇凉水坪', 机制砂: '7.7万吨', 碎石: '8.9万吨', 合计: '16.6万吨', lng: 109.48, lat: 31.03, area: '奉节县' },
+          { 标段: '7标', 地址: '奉节县安坪镇新安路魏家老屋', 机制砂: '7.7万吨', 碎石: '8.9万吨', 合计: '16.6万吨', lng: 109.45, lat: 31.0, area: '奉节县' },
+          { 标段: '8标-1#拌合站', 地址: '奉节县安坪镇新安路魏家老屋（7标合建）', 机制砂: '3.4万吨', 碎石: '3.85万吨', 合计: '7.25万吨', lng: 109.45, lat: 31.0, area: '奉节县' },
+          { 标段: '8标-2#拌合站', 地址: '奉节县甲高镇龙社区一组', 机制砂: '3.4万吨', 碎石: '3.85万吨', 合计: '7.25万吨', lng: 109.42, lat: 30.98, area: '奉节县' },
+          { 标段: '9标', 地址: '奉节县甲高镇大塘村', 机制砂: '4.3万吨', 碎石: '5万吨', 合计: '9.3万吨', lng: 109.4, lat: 30.95, area: '奉节县' },
+          { 标段: '10标', 地址: '云阳县故陵镇钟王村', 机制砂: '5.1万吨', 碎石: '6万吨', 合计: '11.1万吨', lng: 109.35, lat: 30.9, area: '云阳县' },
+          { 标段: '11标-1#拌合站', 地址: '云阳县中前石油故陵加油站', 机制砂: '3.15万吨', 碎石: '3.6万吨', 合计: '6.75万吨', lng: 109.33, lat: 30.88, area: '云阳县' },
+          { 标段: '11标-2#拌合站', 地址: '云阳县新津乡和平社区北', 机制砂: '3.15万吨', 碎石: '3.6万吨', 合计: '6.75万吨', lng: 109.31, lat: 30.87, area: '云阳县' },
+          { 标段: '12标-1#拌合站', 地址: '云阳县宝坪镇枣树村谭家院子', 机制砂: '4万吨', 碎石: '4.6万吨', 合计: '8.6万吨', lng: 109.28, lat: 30.85, area: '云阳县' },
+          { 标段: '12标-2#拌合站', 地址: '云阳县故陵镇桥亭村倒开门', 机制砂: '2万吨', 碎石: '2.3万吨', 合计: '4.3万吨', lng: 109.36, lat: 30.89, area: '云阳县' }
+        ];
+        
+        let successCount = 0;
+        let failCount = 0;
+        
+        locations.forEach((loc, index) => {
+          try {
+            const lnglat = new AMap.LngLat(loc.lng, loc.lat);
+            const color = areaColors[loc.area] || '#999';
+            
+            // 创建自定义图标（彩色圆点）
+            const icon = new AMap.Icon({
+              size: new AMap.Size(24, 24),
+              image: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="' + color + '" stroke="white" stroke-width="3"/></svg>'),
+              imageSize: new AMap.Size(24, 24)
+            });
+            
+            const marker = new AMap.Marker({
+              position: lnglat,
+              title: loc.标段,
+              icon: icon,
+              offset: new AMap.Pixel(-12, -12)
+            });
+            
+            marker.setLabel({
+              content: '<div style="background:' + color + ';color:white;padding:4px 8px;border-radius:4px;font-size:12px;white-space:nowrap;font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.2);">' + loc.标段 + '</div>',
+              direction: 'top',
+              offset: new AMap.Pixel(0, -32)
+            });
+            
+            const infoWindow = new AMap.InfoWindow({
+              content: '<div style="padding:10px;min-width:220px;">' +
+                '<h4 style="margin-bottom:8px;color:' + color + ';border-bottom:2px solid ' + color + ';padding-bottom:5px;">' + loc.标段 + '</h4>' +
+                '<p style="margin:6px 0;font-size:13px;"><strong>📍 地址：</strong>' + loc.地址 + '</p>' +
+                '<p style="margin:6px 0;font-size:13px;"><strong>🏗️ 机制砂(0-5mm)：</strong>' + loc.机制砂 + '</p>' +
+                '<p style="margin:6px 0;font-size:13px;"><strong>🏗️ 碎石(5-31.5mm)：</strong>' + loc.碎石 + '</p>' +
+                '<p style="margin:6px 0;font-size:13px;color:#ff4d4f;font-weight:bold;"><strong>📊 合计：</strong>' + loc.合计 + '</p>' +
+                '</div>',
+              offset: new AMap.Pixel(0, -30)
+            });
+            
+            marker.on('click', function() {
+              infoWindows.forEach(function(iw) { iw.close(); });
+              infoWindow.open(map, marker.getPosition());
+            });
+            
+            marker.setMap(map);
+            markers.push({ marker: marker, loc: loc, lnglat: lnglat });
+            infoWindows.push(infoWindow);
+            successCount++;
+          } catch (e) {
+            console.error('添加标记失败:', loc.标段, e);
+          }
+        });
+        
+        updateLoadingStatus('标记添加完成！正在显示地图...');
+        
+        // 侧边栏点击事件
+        document.querySelectorAll('.location-item').forEach((item, index) => {
+          item.addEventListener('click', function() {
+            const markerData = markers[index];
+            if (markerData) {
+              infoWindows.forEach(function(iw) { iw.close(); });
+              map.setCenter(markerData.lnglat);
+              map.setZoom(14);
+              infoWindows[index].open(map, markerData.lnglat);
+            }
+          });
+        });
+        
+        setTimeout(() => { hideLoading(); }, 800);
+        
+      } catch (e) {
+        console.error('地图初始化失败:', e);
+        updateLoadingStatus('初始化失败');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>铜罐驿市场竞争态势图 - 数据增强版</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f5f5;
+    }
+    
+    #container {
+      display: flex;
+      height: 100vh;
+    }
+    
+    #map {
+      flex: 1;
+      height: 100%;
+    }
+    
+    #sidebar {
+      width: 380px;
+      background: white;
+      box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1000;
+    }
+
+    #legend {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 500;
+      min-width: 220px;
+    }
+    
+    #controls {
+      padding: 15px;
+      background: #f0f0f0;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .control-group {
+      margin-bottom: 15px;
+    }
+    
+    .control-group h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    
+    select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    
+    .layer-toggles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .toggle-btn {
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      position: relative;
+      z-index: 10;
+    }
+
+    .toggle-btn:hover {
+      background: #f5f5f5;
+    }
+
+    .toggle-btn:active {
+      transform: scale(0.98);
+    }
+
+    .toggle-btn.active {
+      background: #1890ff;
+      border-color: #1890ff;
+      color: white;
+    }
+
+    .toggle-btn.active .toggle-icon {
+      filter: brightness(2);
+    }
+    
+    .toggle-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+    
+    #stats {
+      padding: 15px;
+      background: #fff7e6;
+      border-bottom: 1px solid #ffd591;
+      font-size: 13px;
+    }
+    
+    #stats h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #d46b08;
+    }
+    
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    
+    .stat-label {
+      color: #666;
+    }
+    
+    .stat-value {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    #content {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .section-title {
+      padding: 15px 15px 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      background: #fafafa;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .card {
+      padding: 15px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .card:hover {
+      background: #f5f5f5;
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .priority-badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .priority-high {
+      background: #ff7875;
+      color: white;
+    }
+    
+    .priority-medium {
+      background: #ffc069;
+      color: white;
+    }
+    
+    .priority-low {
+      background: #b7eb8f;
+      color: white;
+    }
+    
+    .threat-badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .threat-extreme {
+      background: #f5222d;
+      color: white;
+    }
+    
+    .threat-high {
+      background: #ff4d4f;
+      color: white;
+    }
+    
+    .threat-medium {
+      background: #fa8c16;
+      color: white;
+    }
+    
+    .threat-low {
+      background: #52c41a;
+      color: white;
+    }
+    
+    .card-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .stat-box {
+      background: #f9f9f9;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    
+    .stat-box-label {
+      color: #666;
+      margin-bottom: 3px;
+    }
+    
+    .stat-box-value {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .competitor-list {
+      margin-top: 8px;
+      padding: 8px;
+      background: #fff7e6;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    
+    .competitor-list-title {
+      font-weight: 600;
+      color: #d46b08;
+      margin-bottom: 5px;
+    }
+    
+    .competitor-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 3px;
+    }
+    
+    .competitor-name {
+      color: #666;
+    }
+    
+    .competitor-price {
+      color: #d46b08;
+      font-weight: 600;
+    }
+    
+    .price-diff-positive {
+      color: #52c41a;
+    }
+    
+    .price-diff-negative {
+      color: #f5222d;
+    }
+    
+    .market-trend {
+      margin-top: 8px;
+      padding: 8px;
+      background: #f6ffed;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    
+    .trend-label {
+      font-weight: 600;
+      color: #389e0d;
+      margin-bottom: 3px;
+    }
+    
+    .trend-value {
+      color: #333;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="map"></div>
+    <div id="sidebar">
+      <div id="controls">
+        <div class="control-group">
+          <h3>📊 市场概览</h3>
+          <select id="viewSelect">
+            <option value="all">全部显示</option>
+            <option value="wharfs">仅显示码头</option>
+            <option value="stations">仅显示搅拌站</option>
+            <option value="competitors">仅显示竞争对手</option>
+            <option value="range">服务范围</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
+          <h3>🎨 显示图层</h3>
+          <div class="layer-toggles">
+            <button class="toggle-btn active" data-layer="wharfs">
+              <div class="toggle-icon" style="background: #ff4d4f;"></div>
+              码头
+            </button>
+            <button class="toggle-btn active" data-layer="stations">
+              <div class="toggle-icon" style="background: #fa8c16;"></div>
+              搅拌站
+            </button>
+            <button class="toggle-btn active" data-layer="range">
+              <div class="toggle-icon" style="background: rgba(76, 175, 80, 0.3);"></div>
+              20km范围
+            </button>
+            <button class="toggle-btn active" data-layer="connections">
+              <div class="toggle-icon" style="background: #999;"></div>
+              连接线
+            </button>
+            <button class="toggle-btn active" data-layer="competitors">
+              <div class="toggle-icon" style="background: #722ed1;"></div>
+              竞争对手
+            </button>
+            <button class="toggle-btn active" data-layer="heatmap">
+              <div class="toggle-icon" style="background: linear-gradient(45deg, #ff6b6b, #ffd93d);"></div>
+              需求热度
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div id="stats">
+        <h3>📈 区域市场数据</h3>
+        <div class="stat-item">
+          <span class="stat-label">2026年预估需求</span>
+          <span class="stat-value">1576万吨</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">同比增长</span>
+          <span class="stat-value" style="color: #f5222d;">-4.95%↓</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">竞争矿山数量</span>
+          <span class="stat-value">13家</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">总产能</span>
+          <span class="stat-value">5710万吨</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">产能利用率</span>
+          <span class="stat-value" style="color: #fa8c16;">30%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">当前船运费</span>
+          <span class="stat-value">14.5元/吨</span>
+        </div>
+      </div>
+      
+      <div id="content">
+        <div class="section-title">🏭 码头信息</div>
+        <div id="wharf-list"></div>
+        
+        <div class="section-title">🏗️ 搅拌站拓展分析</div>
+        <div id="station-list"></div>
+        
+        <div class="section-title">⚔️ 竞争对手威胁分析</div>
+        <div id="competitor-list"></div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- 图例 -->
+  <div id="legend">
+    <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #333;">📋 图例</div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #ff4d4f;"></div>
+      <span class="legend-text">铜罐驿码头 (价差3元内可拓展)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #1890ff;"></div>
+      <span class="legend-text">小南海码头 (主要自供)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #52c41a;"></div>
+      <span class="legend-text">黄磏码头 (鑫益成使用)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #fa8c16;"></div>
+      <span class="legend-text">高优先级搅拌站</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #ffc069;"></div>
+      <span class="legend-text">中优先级搅拌站</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #722ed1;"></div>
+      <span class="legend-text">竞争对手标记</span>
+    </div>
+  </div>
+
+  <style>
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-right: 8px;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .legend-text {
+      color: #666;
+    }
+  </style>
+
+  <script src="https://webapi.amap.com/maps?v=2.0&key=2674f2c328906db199e4debb3cd57abe"></script>
+  <script>
+    // 码头数据（含详细竞争信息）
+    const wharfs = [
+      {
+        id: 'tongguanyi',
+        name: '铜罐驿码头',
+        lng: 106.3883,
+        lat: 29.2977,
+        color: '#ff4d4f',
+        '码管费': 3,
+        '靠港价': 46,
+        '船运费': 14.5,
+        '日均出货': '约1万吨',
+        '联系人': '章总 18580752828',
+        '地址': '重庆市九龙坡区铜罐驿镇人民政府东北侧约260米',
+        '覆盖搅拌站': 5,
+        '市场占有率': '约5%',
+        '竞争优势': '位置中心、20km辐射圈广',
+        '竞争劣势': '价格需下调2-3元'
+      },
+      {
+        id: 'xiaonanhai',
+        name: '小南海码头',
+        lng: 106.4223,
+        lat: 29.3529,
+        color: '#1890ff',
+        '码管费': 3,
+        '靠港价': 44,
+        '船运费': 14.5,
+        '日均出货': '主要自供',
+        '特点': '捆绑发运（码管+车运=10元/吨）',
+        '地址': '重庆市大渡口区跳磴镇重庆小南海水泥厂招待所南60米',
+        '覆盖搅拌站': 2,
+        '市场占有率': '自用为主',
+        '竞争优势': '价格最低、捆绑发运',
+        '竞争劣势': '主要自供、对外供应有限'
+      },
+      {
+        id: 'huangjian',
+        name: '黄磏码头',
+        lng: 106.3101,
+        lat: 29.2622,
+        color: '#52c41a',
+        '码管费': 4.5,
+        '靠港价': 46,
+        '船运费': 14.5,
+        '日均出货': '约30万吨（自25年8月起）',
+        '联系人': '石磊 19123457799',
+        '地址': '重庆市九龙坡区西彭镇黄磏川维码头西南58米',
+        '覆盖搅拌站': 1,
+        '市场占有率': '约2%',
+        '主要客户': '鑫益成、纲劲、耘玛',
+        '竞争优势': '鑫益成战略合作',
+        '竞争劣势': '码管费高、覆盖范围小'
+      }
+    ];
+
+    // 搅拌站数据（含详细竞争和价格信息）
+    const stations = [
+      {
+        id: 0,
+        name: '重庆建工南海站',
+        '最近码头': 'xiaonanhai',
+        '码头名称': '小南海',
+        '码头运距': 3,
+        '综合运费': 7.2,
+        lng: 106.4252,
+        lat: 29.3536,
+        '当前需求': '300-500方/天',
+        '正常需求': '3万吨/月',
+        '目标销量': '1万吨/月',
+        '我司靠港价': 44,
+        '我司入库价': 51.2,
+        '竞争入库价': 56,
+        '价差': 4.8,
+        '价差评价': '可拓展',
+        '主要竞争': '涪陵华新(56)、东方希望、绿岛源',
+        '竞争对手列表': [
+          { name: '涪陵华新', price: 56, threat: 'high' },
+          { name: '东方希望', price: 52, threat: 'extreme' },
+          { name: '绿岛源', price: 54, threat: 'medium' }
+        ],
+        '支付方式': '垫资月结（经销商模式）',
+        '垫资费用': '3元以上',
+        '优先级': 'high',
+        '合作意向': '明确',
+        '时间窗口': '1-3月快速切入',
+        '可行性': '高',
+        '市场趋势': '需求稳定，竞争对手供应充足'
+      },
+      {
+        id: 1,
+        name: '中冶建工西彭站',
+        '最近码头': 'tongguanyi',
+        '码头名称': '铜罐驿',
+        '码头运距': 10,
+        '综合运费': 9,
+        lng: 106.3537,
+        lat: 29.3492,
+        '当前需求': '200-300方/天',
+        '正常需求': '1.5-2万方/月',
+        '目标销量': '日均1500-2000吨',
+        '我司靠港价': 46,
+        '我司入库价': 52,
+        '竞争入库价': 46,
+        '价差': 6,
+        '价差评价': '需降价',
+        '主要竞争': '卵石砂(46)、粗砂-林岩',
+        '竞争对手列表': [
+          { name: '卵石砂', price: 46, threat: 'high' },
+          { name: '粗砂-林岩', price: 48, threat: 'medium' }
+        ],
+        '支付方式': '垫资+抵房',
+        '垫资费用': '3元以上',
+        '优先级': 'medium',
+        '合作意向': '3月20日招标前',
+        '可行性': '中',
+        '市场价格': '建议下调至43-44元',
+        '时间窗口': '3月20日招标前'
+      },
+      {
+        id: 2,
+        name: '中冶建工禾远站',
+        '最近码头': 'xiaonanhai',
+        '码头名称': '小南海',
+        '码头运距': 7,
+        '综合运费': 9,
+        lng: 106.4278,
+        lat: 29.4170,
+        '当前需求': '600-700方/天',
+        '正常需求': '2000-3000方/月',
+        '目标销量': '日均1000-1500吨',
+        '我司靠港价': 44,
+        '我司入库价': 51,
+        '竞争入库价': 52,
+        '价差': 1,
+        '价差评价': '可拓展',
+        '主要竞争': '顺志(52)、南川瑞新',
+        '竞争对手列表': [
+          { name: '顺志', price: 52, threat: 'high' },
+          { name: '南川瑞新', price: 50, threat: 'extreme' }
+        ],
+        '支付方式': '垫资+抵房',
+        '垫资费用': '3元以上',
+        '优先级': 'medium',
+        '合作意向': '3月20日招标前',
+        '可行性': '中',
+        '时间窗口': '3月20日招标前',
+        '市场价格': '建议下调至43-44元'
+      },
+      {
+        id: 3,
+        name: '永固东兆站',
+        '最近码头': 'tongguanyi',
+        '码头名称': '铜罐驿',
+        '码头运距': 9,
+        '综合运费': 9,
+        lng: 106.3502,
+        lat: 29.3509,
+        '当前需求': '100方/天（启动期）',
+        '正常需求': '未预估',
+        '目标销量': '日均500-1000吨',
+        '我司靠港价': 46,
+        '我司入库价': 52,
+        '竞争入库价': 51,
+        '价差': 1,
+        '价差评价': '可拓展',
+        '主要竞争': '南川(51)、607(53)',
+        '竞争对手列表': [
+          { name: '南川瑞新', price: 51, threat: 'extreme' },
+          { name: '607', price: 53, threat: 'high' }
+        ],
+        '支付方式': '未知',
+        '优先级': 'medium',
+        '合作意向': '明年3-4月',
+        '可行性': '中',
+        '市场阶段': '启动期',
+        '时间窗口': '明年3-4月'
+      },
+      {
+        id: 4,
+        name: '鑫益成站',
+        '最近码头': 'huangjian',
+        '码头名称': '黄磏',
+        '码头运距': 5,
+        '综合运费': 8.5,
+        lng: 106.3166,
+        lat: 29.2732,
+        '当前需求': '-',
+        '正常需求': '40万方/年',
+        '目标销量': '暂不设定',
+        '我司靠港价': 46,
+        '我司入库价': 50.5,
+        '竞争入库价': 38,
+        '价差': 12.5,
+        '价差评价': '难拓展',
+        '主要竞争': '南川瑞新(38)、姜家国耀(39)、东方希望(40)、卵机砂(35)',
+        '竞争对手列表': [
+          { name: '卵机砂', price: 35, threat: 'high' },
+          { name: '南川瑞新', price: 38, threat: 'extreme' },
+          { name: '姜家国耀', price: 39, threat: 'high' },
+          { name: '东方希望', price: 40, threat: 'extreme' }
+        ],
+        '支付方式': '先款+金融产品，或经销商垫资',
+        '垫资费用': '3元以上',
+        '优先级': 'low',
+        '合作意向': '待机切入',
+        '可行性': '低',
+        '价格劣势': '价差12.5元，难以切入'
+      },
+      {
+        id: 5,
+        name: '驰旭中冠站',
+        '最近码头': 'tongguanyi',
+        '码头名称': '铜罐驿',
+        '码头运距': 22,
+        '综合运费': 13,
+        lng: 106.4,
+        lat: 29.35,
+        '当前需求': '-',
+        '正常需求': '-',
+        '目标销量': '不拓展',
+        '我司靠港价': 46,
+        '我司入库价': 56,
+        '竞争入库价': 48,
+        '价差': 8,
+        '价差评价': '不拓展',
+        '主要竞争': '南川',
+        '竞争对手列表': [
+          { name: '南川瑞新', price: 48, threat: 'extreme' }
+        ],
+        '支付方式': '-',
+        '优先级': 'none',
+        '合作意向': '不拓展',
+        '可行性': '不拓展',
+        '原因': '运距22km，超出经济半径'
+      },
+      {
+        id: 6,
+        name: '驰旭总站',
+        '最近码头': 'tongguanyi',
+        '码头名称': '铜罐驿',
+        '码头运距': 22,
+        '综合运费': 13,
+        lng: 106.41,
+        lat: 29.36,
+        '当前需求': '-',
+        '正常需求': '-',
+        '目标销量': '不拓展',
+        '我司靠港价': 46,
+        '我司入库价': 56,
+        '竞争入库价': 48,
+        '价差': 8,
+        '价差评价': '不拓展',
+        '主要竞争': '南川',
+        '竞争对手列表': [
+          { name: '南川瑞新', price: 48, threat: 'extreme' }
+        ],
+        '支付方式': '-',
+        '优先级': 'none',
+        '合作意向': '不拓展',
+        '可行性': '不拓展',
+        '原因': '运距22km，超出经济半径'
+      }
+    ];
+
+    // 竞争对手数据
+    const competitors = [
+      {
+        id: 'dongfangxiwang',
+        name: '东方希望',
+        lng: 106.38,
+        lat: 29.31,
+        color: '#f5222d',
+        '资源储量': '-',
+        '矿权费': 2.6,
+        '生产成本': 18,
+        '总成本': 20.6,
+        '税点': 13,
+        '日产量': '4.9万吨',
+        '产量2025': 1300,
+        '产量2026': 1500,
+        '销售模式': '直供+经销商',
+        '供应稳定性': '稳定',
+        '成本优势': '极低',
+        '威胁度': 'extreme',
+        '威胁原因': '品牌大厂、产能稳定、渠道广、税点13%',
+        '主要客户': '直供核心客户',
+        '市场份额': '约10%'
+      },
+      {
+        id: 'nanchuanruixin',
+        name: '南川瑞新',
+        lng: 106.9,
+        lat: 29.13,
+        color: '#ff4d4f',
+        '资源储量': 3000,
+        '矿权费': 4,
+        '生产成本': 21,
+        '总成本': 25,
+        '税点': 13,
+        '日产量': '2.0万吨',
+        '产量2025': 500,
+        '产量2026': 750,
+        '销售模式': '先款模式',
+        '供应稳定性': '稳定',
+        '成本优势': '极低',
+        '威胁度': 'extreme',
+        '威胁原因': '电车运费低、税点13%、资源充足',
+        '主要客户': '直供核心客户',
+        '市场份额': '约5%'
+      },
+      {
+        id: 'shunzhi',
+        name: '顺志矿山',
+        lng: 107.3,
+        lat: 29.4,
+        color: '#fa8c16',
+        '资源储量': 8000,
+        '矿权费': 3.3,
+        '生产成本': 21.5,
+        '总成本': 24.8,
+        '税点': 3,
+        '日产量': '-',
+        '产量2025': '-',
+        '产量2026': '-',
+        '销售模式': '直供+经销商',
+        '供应稳定性': '稳定',
+        '成本优势': '低',
+        '威胁度': 'high',
+        '威胁原因': '资源储量8000万吨、直供+经销商双模式',
+        '主要客户': '直供核心客户',
+        '市场份额': '约3%'
+      },
+      {
+        id: 'kuangshan607',
+        name: '607矿山',
+        lng: 106.42,
+        lat: 29.32,
+        color: '#fa8c16',
+        '资源储量': 5400,
+        '矿权费': 3.5,
+        '生产成本': 20,
+        '总成本': 23.5,
+        '税点': 3,
+        '日产量': '4.5万吨',
+        '产量2025': 1000,
+        '产量2026': 1000,
+        '销售模式': '直供核心客户',
+        '供应稳定性': '稳定',
+        '成本优势': '低',
+        '威胁度': 'high',
+        '威胁原因': '无经销商、直供核心客户、资源充足',
+        '主要客户': '直供核心客户',
+        '市场份额': '约4%'
+      },
+      {
+        id: 'jiangjiaguoyao',
+        name: '姜家国耀',
+        lng: 106.85,
+        lat: 29.5,
+        color: '#fa8c16',
+        '资源储量': 800,
+        '矿权费': 14.5,
+        '生产成本': 31,
+        '总成本': 45.5,
+        '税点': 3,
+        '日产量': '-',
+        '产量2025': '-',
+        '产量2026': '-',
+        '销售模式': '直供',
+        '供应稳定性': '稳定',
+        '成本优势': '中',
+        '威胁度': 'high',
+        '威胁原因': '陆运稳定、距离近、但资源即将枯竭',
+        '主要客户': '直供核心客户',
+        '市场份额': '约2%',
+        '枯竭时间': '预计还能持续开采一年左右'
+      }
+    ];
+
+    // 初始化地图
+    let map;
+    let markers = [];
+    let circles = [];
+    let polylines = [];
+    let infoWindows = [];
+
+    function initMap() {
+      try {
+        map = new AMap.Map('map', {
+          zoom: 11,
+          center: [106.36, 29.32],
+          viewMode: '2D',
+          pitch: 0
+        });
+
+        // 创建地图元素
+        createWharfMarkers();
+        createStationMarkers();
+        createCompetitorMarkers();
+        createCircles();
+        createConnections();
+        createHeatmap();
+        
+        // 创建侧边栏内容
+        createSidebarContent();
+        
+        // 绑定控制事件
+        bindControlEvents();
+
+        console.log('地图初始化成功');
+      } catch (error) {
+        console.error('地图初始化失败:', error);
+        document.getElementById('map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;"><p>地图加载失败，请检查网络连接和高德地图Key配置</p></div>';
+      }
+    }
+
+    // 创建码头标记
+    function createWharfMarkers() {
+      wharfs.forEach(wharf => {
+        try {
+          const marker = new AMap.Marker({
+            position: [wharf.lng, wharf.lat],
+            content: '<div style="position:relative;">' +
+              '<div style="background:' + wharf.color + ';width:32px;height:32px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>' +
+              '<div style="position:absolute;top:32px;left:50%;transform:translateX(-50%);white-space:nowrap;background:white;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.2);color:#333;">' + wharf.name + '</div>' +
+              '</div>',
+            offset: new AMap.Pixel(-16, -16),
+            zIndex: 100
+          });
+
+          // 信息窗口
+          const infoWindow = new AMap.InfoWindow({
+            content: '<div style="padding:10px;font-size:13px;">' +
+              '<h4 style="margin:0 0 10px 0;color:#333;font-size:15px;">' + wharf.name + '</h4>' +
+              '<p style="margin:5px 0;"><strong>码管费:</strong> ' + wharf['码管费'] + '元/吨</p>' +
+              '<p style="margin:5px 0;"><strong>靠港价:</strong> ' + wharf['靠港价'] + '元</p>' +
+              '<p style="margin:5px 0;"><strong>日均出货:</strong> ' + wharf['日均出货'] + '</p>' +
+              '<p style="margin:5px 0;"><strong>覆盖搅拌站:</strong> ' + wharf['覆盖搅拌站'] + '家</p>' +
+              '<p style="margin:5px 0;"><strong>市场占有率:</strong> ' + wharf['市场占有率'] + '</p>' +
+              '<p style="margin:5px 0;"><strong>联系人:</strong> ' + (wharf['联系人'] || '-') + '</p>' +
+              '<p style="margin:5px 0;color:#666;font-size:12px;">' + wharf['地址'] + '</p>' +
+              '<div style="margin-top:10px;padding:8px;background:#fff7e6;border-radius:4px;">' +
+              '<p style="margin:3px 0;color:#d46b08;"><strong>竞争优势:</strong> ' + wharf['竞争优势'] + '</p>' +
+              '<p style="margin:3px 0;color:#f5222d;"><strong>竞争劣势:</strong> ' + wharf['竞争劣势'] + '</p>' +
+              '</div>' +
+              '</div>',
+            offset: new AMap.Pixel(0, -32)
+          });
+
+          marker.on('click', function() {
+            infoWindow.open(map, marker.getPosition());
+          });
+
+          marker.setMap(map);
+          markers.push({ type: 'wharf', marker: marker, data: wharf });
+          infoWindows.push(infoWindow);
+        } catch (error) {
+          console.error('创建码头标记失败:', wharf.name, error);
+        }
+      });
+    }
+
+    // 创建搅拌站标记
+    function createStationMarkers() {
+      stations.forEach(station => {
+        if (station['优先级'] === 'none') return;
+
+        const priorityMap = {
+          'high': { color: '#fa8c16', size: 36, zIndex: 90 },
+          'medium': { color: '#ffc069', size: 30, zIndex: 85 },
+          'low': { color: '#b7eb8f', size: 24, zIndex: 80 }
+        };
+
+        const priority = priorityMap[station['优先级']] || { color: '#999', size: 26, zIndex: 75 };
+
+        const marker = new AMap.Marker({
+          position: [station.lng, station.lat],
+          content: '<div style="position:relative;">' +
+            '<div style="background:' + priority.color + ';width:' + priority.size + 'px;height:' + priority.size + 'px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>' +
+            '<div style="position:absolute;top:' + priority.size + 'px;left:50%;transform:translateX(-50%);white-space:nowrap;background:white;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.2);color:#333;">' + station.name + '</div>' +
+            '</div>',
+          offset: new AMap.Pixel(-priority.size/2, -priority.size/2),
+          zIndex: priority.zIndex
+        });
+
+        // 信息窗口
+        const competitorListHtml = station['竞争对手列表'] ? station['竞争对手列表'].map(c => 
+          '<div style="display:flex;justify-content:space-between;margin:3px 0;padding:4px;background:#fff7e6;border-radius:3px;font-size:12px;">' +
+          '<span>' + c.name + '</span>' +
+          '<span style="color:#d46b08;font-weight:600;">' + c.price + '元</span>' +
+          '</div>'
+        ).join('') : '';
+
+        const infoWindow = new AMap.InfoWindow({
+          content: '<div style="padding:10px;font-size:13px;">' +
+            '<h4 style="margin:0 0 10px 0;color:#333;font-size:15px;">' + station.name + '</h4>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">' +
+            '<div style="padding:6px;background:#f9f9f9;border-radius:4px;font-size:12px;"><strong>我司入库价:</strong><br/>' + station['我司入库价'] + '元</div>' +
+            '<div style="padding:6px;background:#fff7e6;border-radius:4px;font-size:12px;"><strong>竞争入库价:</strong><br/>' + station['竞争入库价'] + '元</div>' +
+            '<div style="padding:6px;background:' + (station['价差'] <= 4 ? '#f6ffed' : '#fff1f0') + ';border-radius:4px;font-size:12px;"><strong>价差:</strong><br/>' + station['价差'] + '元</div>' +
+            '<div style="padding:6px;background:#f0f0f0;border-radius:4px;font-size:12px;"><strong>综合运费:</strong><br/>' + station['综合运费'] + '元</div>' +
+            '</div>' +
+            '<p style="margin:5px 0;"><strong>当前需求:</strong> ' + station['当前需求'] + '</p>' +
+            '<p style="margin:5px 0;"><strong>目标销量:</strong> ' + station['目标销量'] + '</p>' +
+            '<p style="margin:5px 0;"><strong>支付方式:</strong> ' + station['支付方式'] + '</p>' +
+            '<p style="margin:5px 0;"><strong>时间窗口:</strong> ' + (station['时间窗口'] || '-') + '</p>' +
+            '<div style="margin-top:10px;padding:8px;background:#f6ffed;border-radius:4px;">' +
+            '<p style="margin:3px 0;color:#389e0d;font-weight:600;"><strong>市场趋势:</strong> ' + (station['市场趋势'] || '-') + '</p>' +
+            '</div>' +
+            '<div style="margin-top:10px;">' +
+            '<p style="margin:5px 0;font-weight:600;">主要竞争对手:</p>' +
+            competitorListHtml +
+            '</div>' +
+            '</div>',
+          offset: new AMap.Pixel(0, -priority.size/2)
+        });
+
+        marker.on('click', function() {
+          infoWindow.open(map, marker.getPosition());
+        });
+
+        marker.setMap(map);
+        markers.push({ type: 'station', marker: marker, data: station });
+        infoWindows.push(infoWindow);
+      });
+    }
+
+    // 创建竞争对手标记
+    function createCompetitorMarkers() {
+      competitors.forEach(competitor => {
+        const marker = new AMap.Marker({
+          position: [competitor.lng, competitor.lat],
+          content: '<div style="position:relative;">' +
+            '<div style="background:' + competitor.color + ';width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:bold;">⚔️</div>' +
+            '<div style="position:absolute;top:24px;left:50%;transform:translateX(-50%);white-space:nowrap;background:white;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.2);color:#333;">' + competitor.name + '</div>' +
+            '</div>',
+          offset: new AMap.Pixel(-12, -12),
+          zIndex: 70
+        });
+
+        // 信息窗口
+        const infoWindow = new AMap.InfoWindow({
+          content: '<div style="padding:10px;font-size:13px;">' +
+            '<h4 style="margin:0 0 10px 0;color:#333;font-size:15px;">⚔️ ' + competitor.name + '</h4>' +
+            '<div style="padding:8px;background:' + (competitor['威胁度'] === 'extreme' ? '#fff1f0' : '#fff7e6') + ';border-radius:4px;margin-bottom:10px;">' +
+            '<p style="margin:3px 0;font-weight:600;color:' + (competitor['威胁度'] === 'extreme' ? '#f5222d' : '#d46b08') + ';">威胁度: ' + (competitor['威胁度'] === 'extreme' ? '极高' : competitor['威胁度'] === 'high' ? '高' : '中') + '</p>' +
+            '<p style="margin:3px 0;color:#666;">' + competitor['威胁原因'] + '</p>' +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">' +
+            '<div style="padding:6px;background:#f9f9f9;border-radius:4px;font-size:12px;"><strong>总成本:</strong><br/>' + competitor['总成本'] + '元</div>' +
+            '<div style="padding:6px;background:#f9f9f9;border-radius:4px;font-size:12px;"><strong>税点:</strong><br/>' + competitor['税点'] + '%</div>' +
+            '<div style="padding:6px;background:#f9f9f9;border-radius:4px;font-size:12px;"><strong>日产量:</strong><br/>' + (competitor['日产量'] || '-') + '</div>' +
+            '<div style="padding:6px;background:#f9f9f9;border-radius:4px;font-size:12px;"><strong>供应稳定性:</strong><br/>' + competitor['供应稳定性'] + '</div>' +
+            '</div>' +
+            '<p style="margin:5px 0;"><strong>资源储量:</strong> ' + (competitor['资源储量'] || '-') + '万吨</p>' +
+            '<p style="margin:5px 0;"><strong>销售模式:</strong> ' + competitor['销售模式'] + '</p>' +
+            '<p style="margin:5px 0;"><strong>成本优势:</strong> ' + competitor['成本优势'] + '</p>' +
+            '<p style="margin:5px 0;"><strong>市场份额:</strong> ' + (competitor['市场份额'] || '-') + '</p>' +
+            (competitor['枯竭时间'] ? '<p style="margin:5px 0;color:#f5222d;"><strong>⚠️ 资源即将枯竭:</strong> ' + competitor['枯竭时间'] + '</p>' : '') +
+            '</div>',
+          offset: new AMap.Pixel(0, -12)
+        });
+
+        marker.on('click', function() {
+          infoWindow.open(map, marker.getPosition());
+        });
+
+        marker.setMap(map);
+        markers.push({ type: 'competitor', marker: marker, data: competitor });
+        infoWindows.push(infoWindow);
+      });
+    }
+
+    // 创建20km范围圈
+    function createCircles() {
+      wharfs.forEach(wharf => {
+        const circle = new AMap.Circle({
+          center: [wharf.lng, wharf.lat],
+          radius: 20000,
+          fillColor: wharf.color,
+          fillOpacity: 0.12,
+          strokeColor: wharf.color,
+          strokeOpacity: 0.35,
+          strokeWeight: 2.5,
+          zIndex: 10
+        });
+        circle.setMap(map);
+        circles.push(circle);
+      });
+    }
+
+    // 创建连接线
+    function createConnections() {
+      stations.forEach(station => {
+        if (station['优先级'] === 'none') return;
+
+        const wharf = wharfs.find(w => w.id === station['最近码头']);
+        if (wharf) {
+          const polyline = new AMap.Polyline({
+            path: [[wharf.lng, wharf.lat], [station.lng, station.lat]],
+            borderWeight: 1,
+            strokeColor: wharf.color,
+            strokeOpacity: 0.5,
+            strokeWeight: 3,
+            lineJoin: 'round',
+            zIndex: 5
+          });
+          polyline.setMap(map);
+          polylines.push(polyline);
+        }
+      });
+    }
+
+    // 创建需求热力图（模拟）
+    function createHeatmap() {
+      // 需求热力图使用半透明圆形表示需求密度
+      stations.forEach(station => {
+        if (station['优先级'] === 'none') return;
+
+        const demandLevel = {
+          'high': { radius: 8000, opacity: 0.25, color: '#ff4d4f' },
+          'medium': { radius: 6000, opacity: 0.18, color: '#ffc069' },
+          'low': { radius: 4000, opacity: 0.12, color: '#b7eb8f' }
+        };
+
+        const level = demandLevel[station['优先级']] || demandLevel['medium'];
+
+        const heatmap = new AMap.Circle({
+          center: [station.lng, station.lat],
+          radius: level.radius,
+          fillColor: level.color,
+          fillOpacity: level.opacity,
+          strokeColor: level.color,
+          strokeOpacity: 0.4,
+          strokeWeight: 1.5,
+          zIndex: 3
+        });
+        heatmap.setMap(map);
+        heatmap.layerType = 'heatmap';
+        circles.push(heatmap);
+      });
+    }
+
+    // 创建侧边栏内容
+    function createSidebarContent() {
+      // 码头列表
+      const wharfList = document.getElementById('wharf-list');
+      wharfs.forEach(wharf => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="card-title">${wharf.name}</span>
+          </div>
+          <div class="card-stats">
+            <div class="stat-box">
+              <div class="stat-box-label">靠港价</div>
+              <div class="stat-box-value">${wharf['靠港价']}元</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-label">日均出货</div>
+              <div class="stat-box-value">${wharf['日均出货']}</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#666;">
+            <p style="margin:3px 0;">覆盖搅拌站: <strong>${wharf['覆盖搅拌站']}家</strong></p>
+            <p style="margin:3px 0;">市场占有率: <strong>${wharf['市场占有率']}</strong></p>
+          </div>
+        `;
+        card.onclick = () => focusWharf(wharf.id);
+        wharfList.appendChild(card);
+      });
+
+      // 搅拌站列表
+      const stationList = document.getElementById('station-list');
+      stations.filter(s => s['优先级'] !== 'none').forEach(station => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const priorityClass = {
+          'high': 'priority-high',
+          'medium': 'priority-medium',
+          'low': 'priority-low'
+        }[station['优先级']];
+
+        const priorityText = {
+          'high': '高优先级',
+          'medium': '中优先级',
+          'low': '低优先级'
+        }[station['优先级']];
+
+        const priceDiffClass = station['价差'] <= 4 ? 'price-diff-positive' : 'price-diff-negative';
+
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="card-title">${station.name}</span>
+            <span class="priority-badge ${priorityClass}">${priorityText}</span>
+          </div>
+          <div class="card-stats">
+            <div class="stat-box">
+              <div class="stat-box-label">我司入库价</div>
+              <div class="stat-box-value">${station['我司入库价']}元</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-label">竞争入库价</div>
+              <div class="stat-box-value" style="color:#d46b08;">${station['竞争入库价']}元</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-label">价差</div>
+              <div class="stat-box-value ${priceDiffClass}">${station['价差']}元</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-label">目标销量</div>
+              <div class="stat-box-value">${station['目标销量']}</div>
+            </div>
+          </div>
+          ${station['竞争对手列表'] && station['竞争对手列表'].length > 0 ? `
+          <div class="competitor-list">
+            <div class="competitor-list-title">主要竞争对手:</div>
+            ${station['竞争对手列表'].map(c => `
+              <div class="competitor-item">
+                <span class="competitor-name">${c.name}</span>
+                <span class="competitor-price">${c.price}元</span>
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+          <div class="market-trend">
+            <div class="trend-label">💡 建议:</div>
+            <div class="trend-value">${station['可行性'] === '高' ? '快速切入' : station['可行性'] === '中' ? '逐步拓展' : '待机切入'}</div>
+          </div>
+        `;
+        card.onclick = () => focusStation(station.id);
+        stationList.appendChild(card);
+      });
+
+      // 竞争对手列表
+      const competitorList = document.getElementById('competitor-list');
+      competitors.forEach(competitor => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const threatClass = {
+          'extreme': 'threat-extreme',
+          'high': 'threat-high',
+          'medium': 'threat-medium',
+          'low': 'threat-low'
+        }[competitor['威胁度']];
+
+        const threatText = {
+          'extreme': '极高威胁',
+          'high': '高威胁',
+          'medium': '中威胁',
+          'low': '低威胁'
+        }[competitor['威胁度']];
+
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="card-title">⚔️ ${competitor.name}</span>
+            <span class="threat-badge ${threatClass}">${threatText}</span>
+          </div>
+          <div class="card-stats">
+            <div class="stat-box">
+              <div class="stat-box-label">总成本</div>
+              <div class="stat-box-value">${competitor['总成本']}元</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-label">税点</div>
+              <div class="stat-box-value" style="color:${competitor['税点'] >= 13 ? '#f5222d' : '#52c41a'};">${competitor['税点']}%</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-label">日产量</div>
+              <div class="stat-box-value">${competitor['日产量'] || '-'}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-label">成本优势</div>
+              <div class="stat-box-value">${competitor['成本优势']}</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#666;">
+            <p style="margin:3px 0;"><strong>销售模式:</strong> ${competitor['销售模式']}</p>
+            <p style="margin:3px 0;"><strong>供应稳定性:</strong> ${competitor['供应稳定性']}</p>
+            <p style="margin:3px 0;"><strong>资源储量:</strong> ${competitor['资源储量'] || '-'}万吨</p>
+          </div>
+          <div class="market-trend">
+            <div class="trend-label">⚠️ 威胁原因:</div>
+            <div class="trend-value">${competitor['威胁原因']}</div>
+          </div>
+        `;
+        card.onclick = () => focusCompetitor(competitor.id);
+        competitorList.appendChild(card);
+      });
+    }
+
+    // 聚焦功能
+    function focusWharf(wharfId) {
+      const wharfMarker = markers.find(m => m.type === 'wharf' && m.data.id === wharfId);
+      if (wharfMarker) {
+        infoWindows.forEach(iw => iw.close());
+        map.setCenter(wharfMarker.marker.getPosition());
+        map.setZoom(13);
+        wharfMarker.marker.emit('click', { target: wharfMarker.marker });
+      }
+    }
+
+    function focusStation(index) {
+      const stationMarker = markers.find(m => m.type === 'station' && m.data.id === index);
+      if (stationMarker) {
+        infoWindows.forEach(iw => iw.close());
+        map.setCenter(stationMarker.marker.getPosition());
+        map.setZoom(13);
+        stationMarker.marker.emit('click', { target: stationMarker.marker });
+      }
+    }
+
+    function focusCompetitor(competitorId) {
+      const competitorMarker = markers.find(m => m.type === 'competitor' && m.data.id === competitorId);
+      if (competitorMarker) {
+        infoWindows.forEach(iw => iw.close());
+        map.setCenter(competitorMarker.marker.getPosition());
+        map.setZoom(12);
+        competitorMarker.marker.emit('click', { target: competitorMarker.marker });
+      }
+    }
+
+    // 绑定控制事件
+    function bindControlEvents() {
+      // 视图切换
+      document.getElementById('viewSelect').addEventListener('change', function(e) {
+        const view = e.target.value;
+
+        const wharfMarkers = markers.filter(m => m.type === 'wharf');
+        const stationMarkers = markers.filter(m => m.type === 'station');
+        const competitorMarkers = markers.filter(m => m.type === 'competitor');
+        const rangeCircles = circles.filter(c => !c.layerType);
+        const heatmapCircles = circles.filter(c => c.layerType === 'heatmap');
+
+        // 重置所有图层按钮状态
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+          btn.classList.add('active');
+        });
+
+        wharfMarkers.forEach(m => m.marker.setVisible(view === 'all' || view === 'wharfs' || view === 'range'));
+        stationMarkers.forEach(m => m.marker.setVisible(view === 'all' || view === 'stations'));
+        competitorMarkers.forEach(m => m.marker.setVisible(view === 'all' || view === 'competitors'));
+        rangeCircles.forEach(c => c.setMap((view === 'all' || view === 'wharfs' || view === 'range') ? map : null));
+        polylines.forEach(p => p.setMap((view === 'all' || view === 'stations' || view === 'range') ? map : null));
+        heatmapCircles.forEach(c => c.setMap((view === 'all' || view === 'stations') ? map : null));
+      });
+
+      // 图层切换 - 简化版,独立控制
+      console.log('开始绑定图层切换事件,按钮数量:', document.querySelectorAll('.toggle-btn').length);
+      document.querySelectorAll('.toggle-btn').forEach((btn, index) => {
+        console.log('绑定按钮', index, 'data-layer:', btn.dataset.layer);
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const layer = this.dataset.layer;
+          console.log('点击图层按钮:', layer);
+          this.classList.toggle('active');
+
+          const isActive = this.classList.contains('active');
+          console.log('图层状态:', layer, 'visible:', isActive);
+
+          // 独立控制每个图层,不受视图影响
+          switch (layer) {
+            case 'wharfs':
+              const wharfCount = markers.filter(m => m.type === 'wharf').length;
+              console.log('切换码头图层,标记数量:', wharfCount);
+              markers.filter(m => m.type === 'wharf').forEach(m => {
+                console.log('码头标记对象:', m.marker);
+                m.marker.setMap(isActive ? map : null);
+              });
+              break;
+            case 'stations':
+              const stationCount = markers.filter(m => m.type === 'station').length;
+              console.log('切换搅拌站图层,标记数量:', stationCount);
+              markers.filter(m => m.type === 'station').forEach(m => {
+                console.log('搅拌站标记对象:', m.marker);
+                m.marker.setMap(isActive ? map : null);
+              });
+              break;
+            case 'range':
+              const rangeCount = circles.filter(c => !c.layerType).length;
+              console.log('切换20km范围图层,圆圈数量:', rangeCount);
+              circles.filter(c => !c.layerType).forEach(c => c.setMap(isActive ? map : null));
+              break;
+            case 'connections':
+              const connCount = polylines.length;
+              console.log('切换连接线图层,线条数量:', connCount);
+              polylines.forEach(p => p.setMap(isActive ? map : null));
+              break;
+            case 'competitors':
+              const compCount = markers.filter(m => m.type === 'competitor').length;
+              console.log('切换竞争对手图层,标记数量:', compCount);
+              markers.filter(m => m.type === 'competitor').forEach(m => {
+                console.log('竞争对手标记对象:', m.marker);
+                m.marker.setMap(isActive ? map : null);
+              });
+              break;
+            case 'heatmap':
+              const heatCount = circles.filter(c => c.layerType === 'heatmap').length;
+              console.log('切换需求热度图层,热力圈数量:', heatCount);
+              circles.filter(c => c.layerType === 'heatmap').forEach(c => c.setMap(isActive ? map : null));
+              break;
+          }
+        });
+      });
+    }
+
+    // 页面加载完成后初始化地图
+    window.onload = initMap;
+  </script>
+</body>
+</html>
